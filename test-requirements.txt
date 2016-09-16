@@ -1,0 +1,5 @@
+flake8
+pytest
+pytest-flask
+pytest-helpers-namespace
+pytest-mock

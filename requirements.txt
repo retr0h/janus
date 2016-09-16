@@ -1,0 +1,7 @@
+alembic
+Flask
+flask-restful
+MySQL-python
+pbr
+python-envcfg
+sqlalchemy
