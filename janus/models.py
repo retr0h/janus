@@ -55,10 +55,11 @@ class Node(Base, BaseMixin):
     __table__ = sqlalchemy.Table('nodes', metadata, autoload=True)
 
     def __repr__(self):
-        obj = '(<Node: id={}, name={}, port={}, created_at={}, updated_at={}>'
+        obj = ('(<Node: id={}, name={}, port={}, created_at={}, '
+               'updated_at={}, deleted_at={}>)')
 
         return obj.format(self.id, self.name, self.port, self.created_at,
-                          self.updated_at)
+                          self.updated_at, self.deleted_at)
 
     @sqlalchemy.orm.validates('port')
     def validate_port(self, key, port):
@@ -79,7 +80,8 @@ class Node(Base, BaseMixin):
             'name': self.name,
             'port': self.port,
             'created_at': self.created_at,
-            'updated_at': self.updated_at
+            'updated_at': self.updated_at,
+            'deleted_at': self.deleted_at
         }
 
 

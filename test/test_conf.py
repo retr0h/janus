@@ -35,7 +35,7 @@ def test_port_start():
     assert 40000 == result
 
 
-def test_get_db_url():
+def test_port_end():
     result = conf.port_end()
 
     assert 50000 == result

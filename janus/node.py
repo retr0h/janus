@@ -20,6 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+import datetime
+
 import sqlalchemy.exc
 
 from janus import client
@@ -34,10 +36,9 @@ def get_port(name):
     :param name: A string containing the name to find.
     :return: int
     """
-    with client.session_scope() as session:
-        node = find_by_name(name)
-        if node:
-            return node.port
+    node = find_by_name(name)
+    if node:
+        return node.port
     return get_next_port()
 
 
@@ -47,6 +48,14 @@ def get_next_port():
 
     :return: int
     """
+    deleted = find_deleted()
+    if deleted:
+        n = deleted.pop(0)
+        port = n.port
+        with client.session_scope() as session:
+            n.deleted_at = None
+            session.add(n)
+        return port
     with client.session_scope() as session:
         n = models.Node
         return session.query(n).count() + conf.port_start()
@@ -54,13 +63,13 @@ def get_next_port():
 
 def all():
     """
-    Finds and returns a list of all nodes.
+    Finds and returns a list of all non-deleted nodes.
 
     :return: list
     """
     with client.session_scope() as session:
         n = models.Node
-        return session.query(n).all()
+        return session.query(n).filter(n.deleted_at.is_(None)).all()
 
 
 def create(name, port=None):
@@ -83,7 +92,7 @@ def create(name, port=None):
         return
 
 
-def delete(obj):
+def delete(obj, soft=True):
     """
     Deletes the given object, and returns a bool.
 
@@ -91,10 +100,21 @@ def delete(obj):
     :return: bool
     """
     if obj:
-        with client.session_scope() as session:
-            session.delete(obj)
+        if soft:
+            return _soft_delete(obj)
+        else:
+            with client.session_scope() as session:
+                session.delete(obj)
 
-            return True
+                return True
+
+
+def _soft_delete(obj):
+    with client.session_scope() as session:
+        obj.deleted_at = datetime.datetime.utcnow()
+        session.add(obj)
+
+        return True
 
 
 def delete_by_name(name):
@@ -106,10 +126,7 @@ def delete_by_name(name):
     """
     node = find_by_name(name)
     if node:
-        with client.session_scope() as session:
-            session.delete(node)
-
-            return True
+        return delete(node)
 
 
 def delete_all():
@@ -125,7 +142,7 @@ def delete_all():
         return session.query(n).delete()
 
 
-def find_by_name(name):
+def find_by_name(name, soft=False):
     """
     Find the given name, and returns the object.
 
@@ -134,5 +151,20 @@ def find_by_name(name):
     """
     with client.temp_scope() as session:
         n = models.Node
+        q = session.query(n).filter(n.name == name)
+        if not soft:
+            q = q.filter(n.deleted_at.is_(None))
 
-        return session.query(n).filter(n.name == name).first()
+        return q.first()
+
+
+def find_deleted():
+    """
+    Finds and returns a list of all deleted nodes.
+
+    :return: list
+    """
+    with client.temp_scope() as session:
+        n = models.Node
+        return session.query(n).filter(n.deleted_at.isnot(None)).order_by(
+            n.port).all()

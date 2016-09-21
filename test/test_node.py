@@ -43,18 +43,20 @@ def test_get_next_port(delete_all_nodes):
     assert 40002 == node.get_next_port()
 
 
-@pytest.mark.skip(reason="backfill fails, core needs reworked")
 def test_get_next_port_backfill(delete_all_nodes):
-    node.create('test-node1', 40001)
-    node.create('test-node2', 40002)
-    node.create('test-node3', 40003)
-    node.create('test-node4', 40004)
-    node.create('test-node5', 40005)
-    node.create('test-node6', 40006)
+    node.create('test-node1', 40000)
+    node.create('test-node2', 40001)
+    node.create('test-node3', 40002)
+    node.create('test-node4', 40003)
+    node.create('test-node5', 40004)
+    node.create('test-node6', 40005)
 
     node.delete_by_name('test-node3')
+    node.delete_by_name('test-node4')
 
-    assert 40007 == node.get_next_port()
+    assert 40002 == node.get_next_port()
+    assert 40003 == node.get_next_port()
+    assert 40006 == node.get_next_port()
 
 
 def test_node_serialize(create_node):
@@ -70,16 +72,17 @@ def test_all(create_node):
     assert isinstance(result, list)
 
 
-def test_create(delete_all_nodes):
-    node.create('test-node')
-    node.create('test-new-node')
-
+def test_all_filters_soft_deleted(create_node):
     result = node.find_by_name('test-node')
-    assert 40000 == result.port
+    node.delete(result)
 
-    result = node.find_by_name('test-new-node')
-    assert 'test-new-node' == result.name
-    assert 40001 == result.port
+    assert 0 == len(node.all())
+
+
+def test_create(create_node):
+    result = node.find_by_name('test-node')
+    assert 'test-node' == result.name
+    assert 40000 == result.port
     assert isinstance(result.updated_at, datetime.datetime)
     assert isinstance(result.created_at, datetime.datetime)
 
@@ -91,6 +94,27 @@ def test_delete(create_node):
 
     result = node.find_by_name('foo-hostname')
     assert not result
+
+
+def test_delete_soft(delete_all_nodes):
+    node.create('test-node')
+    n = node.find_by_name('test-node')
+    result = node.delete(n)
+
+    result = node.find_by_name('test-node', soft=True)
+    assert isinstance(result.deleted_at, datetime.datetime)
+
+
+def test_find_deleted(delete_all_nodes):
+    node1 = node.create('test-node1')
+    node2 = node.create('test-node2')
+
+    node.delete(node1)
+    node.delete(node2)
+
+    result = node.find_deleted()
+    assert 2 == len(result)
+    assert isinstance(result, list)
 
 
 def test_delete_returns_false():
