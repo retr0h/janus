@@ -21,33 +21,9 @@
 # THE SOFTWARE.
 
 
-def test_get(create_node, client):
-    response = client.get('/node/test-node')
+def test_get(client, create_node):
+    response = client.get('/tags')
     assert 200 == response.status_code
+    assert 1 == len(response.json)
 
-    nd = response.json.get('node')
-    assert 'test-node' == nd.get('name')
-    assert 'test-tag' == nd.get('tag')
-    assert nd.get('port')
-    assert nd.get('updated_at')
-    assert nd.get('created_at')
-
-
-def test_get_not_found(create_node, client):
-    response = client.get('/node/test-invalid')
-    assert 404 == response.status_code
-    assert '"Not Found"\n' == response.data
-
-
-def test_delete(create_node, client):
-    response = client.delete('/node/test-node')
-    assert 204 == response.status_code
-    assert '' == response.data
-
-
-def test_delete_when_deleted(create_node, client):
-    client.delete('/node/test-node')
-
-    response = client.delete('/node/test-node')
-    assert 404 == response.status_code
-    assert '"Not Found"\n' == response.data
+    assert {'tags': ['test-tag']} == response.json

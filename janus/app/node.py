@@ -46,6 +46,7 @@ class Node(flask_restful.Resource):
           {
             "node": {
               "name": str,
+              "tag": str,
               "port": int,
               "created_at": datetime,
               "updated_at": datetime
@@ -64,16 +65,12 @@ class Node(flask_restful.Resource):
           /node/:node_id DELETE
 
         Response code: 204
-        Response data:
-
-        .. code-block:: javascript
-
-          No Content
+        Response data: Empty
         """
         n = node.find_by_name(node_id)
 
         if node.delete(n):
-            return 'No Content', 204
+            return '', 204
         return 'Not Found', '404'
 
     def put(self, node_id):

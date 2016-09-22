@@ -44,3 +44,4 @@ def test_post_when_exists(client, delete_all_nodes):
 
     response = client.post('/nodes', data=data)
     assert 409 == response.status_code
+    assert '"Conflict"\n' == response.data

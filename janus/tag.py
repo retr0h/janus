@@ -19,35 +19,35 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+"""
+Broke this out into a module, since we will likely move to n to 1 relationship.
+"""
+
+from janus import client
+from janus import models
+from janus import node
 
 
-def test_get(create_node, client):
-    response = client.get('/node/test-node')
-    assert 200 == response.status_code
+def all_():
+    """
+    Finds and returns a list of all non-deleted tags.
 
-    nd = response.json.get('node')
-    assert 'test-node' == nd.get('name')
-    assert 'test-tag' == nd.get('tag')
-    assert nd.get('port')
-    assert nd.get('updated_at')
-    assert nd.get('created_at')
+    :return: list
+    """
+    with client.session_scope() as session:
+        tags = session.query(models.Node.tag).distinct().all()
 
-
-def test_get_not_found(create_node, client):
-    response = client.get('/node/test-invalid')
-    assert 404 == response.status_code
-    assert '"Not Found"\n' == response.data
+        return list(sum(tags, ()))
 
 
-def test_delete(create_node, client):
-    response = client.delete('/node/test-node')
-    assert 204 == response.status_code
-    assert '' == response.data
+def find_all_by_tag(tag):
+    """
+    Find the given tag, and return a list of all node objects.
 
-
-def test_delete_when_deleted(create_node, client):
-    client.delete('/node/test-node')
-
-    response = client.delete('/node/test-node')
-    assert 404 == response.status_code
-    assert '"Not Found"\n' == response.data
+    :param tag: A string containing the tag to find.
+    :return: list
+    """
+    with client.temp_scope() as session:
+        n = models.Node
+        return (session.query(n).filter(n.tag == tag)
+                .filter(n.deleted_at.is_(None)).order_by(n.tag).all())

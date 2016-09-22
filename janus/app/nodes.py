@@ -51,7 +51,7 @@ class Nodes(flask_restful.Resource):
             ]
           }
         """
-        return flask.jsonify(nodes=[result.name for result in node.all()])
+        return flask.jsonify(nodes=[result.name for result in node.all_()])
 
     def post(self):
         """
@@ -64,7 +64,8 @@ class Nodes(flask_restful.Resource):
         .. code-block:: javascript
 
           {
-              "name": str
+              "name": str,
+              "tag": str
           }
 
         Response code: 201
@@ -75,6 +76,7 @@ class Nodes(flask_restful.Resource):
           {
             "node": {
               "name": str,
+              "tag": str,
               "port": int,
               "created_at": datetime,
               "updated_at": datetime
@@ -82,14 +84,16 @@ class Nodes(flask_restful.Resource):
           }
 
         """
-        parser.add_argument('name')
+        parser.add_argument('name', type=str)
+        parser.add_argument('tag', type=str)
         args = parser.parse_args()
         node_id = args.get('name')
+        tag = args.get('tag')
 
         if node.find_by_name(node_id):
             return 'Conflict', 409
 
-        n = node.create(node_id)
+        n = node.create(node_id, tag)
         if n:
             return flask.make_response(flask.jsonify(node=n.serialize), 201)
 

@@ -61,7 +61,7 @@ def get_next_port():
         return session.query(n).count() + conf.port_start()
 
 
-def all():
+def all_():
     """
     Finds and returns a list of all non-deleted nodes.
 
@@ -69,21 +69,22 @@ def all():
     """
     with client.session_scope() as session:
         n = models.Node
-        return session.query(n).filter(n.deleted_at.is_(None)).all()
+        return (session.query(n).filter(n.deleted_at.is_(None)).all())
 
 
-def create(name, port=None):
+def create(name, tag, port=None):
     """
     Creates a node with the given name/port, and returns the object.
 
     :param name: A string containing the name to create.
+    :param tag: A string containing name to tag the node with.
     :param port: An optional int containing the port to create.
     :return: :class:`.Node`
     """
     if port is None:
         port = get_port(name)
     try:
-        n = models.Node(name=name, port=port)
+        n = models.Node(name=name, tag=tag, port=port)
         with client.session_scope() as session:
             session.add(n)
 
@@ -137,9 +138,7 @@ def delete_all():
     :return: int
     """
     with client.session_scope() as session:
-        n = models.Node
-
-        return session.query(n).delete()
+        return session.query(models.Node).delete()
 
 
 def find_by_name(name, soft=False):
@@ -166,5 +165,5 @@ def find_deleted():
     """
     with client.temp_scope() as session:
         n = models.Node
-        return session.query(n).filter(n.deleted_at.isnot(None)).order_by(
-            n.port).all()
+        return (session.query(n).filter(n.deleted_at.isnot(None))
+                .order_by(n.port).all())

@@ -3,6 +3,8 @@ import flask
 from janus import client
 from janus.app import node
 from janus.app import nodes
+from janus.app import tag
+from janus.app import tags
 
 
 def before_request():
@@ -22,6 +24,8 @@ def create_app():
     app.before_request(before_request)
     app.after_request(after_request)
 
+    app.register_blueprint(tags.blueprint)
+    app.register_blueprint(tag.blueprint)
     app.register_blueprint(nodes.blueprint)
     app.register_blueprint(node.blueprint)
 

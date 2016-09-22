@@ -1,4 +1,4 @@
-"""node soft delete
+"""nodes deleted_at column
 
 Revision ID: f86f627072c9
 Revises: 5c0c27754e76

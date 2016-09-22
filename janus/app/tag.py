@@ -20,34 +20,46 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+import flask
+import flask_restful
+import flask_restful.reqparse
 
-def test_get(create_node, client):
-    response = client.get('/node/test-node')
-    assert 200 == response.status_code
+from janus import tag
 
-    nd = response.json.get('node')
-    assert 'test-node' == nd.get('name')
-    assert 'test-tag' == nd.get('tag')
-    assert nd.get('port')
-    assert nd.get('updated_at')
-    assert nd.get('created_at')
+blueprint = flask.Blueprint('tag_blueprint', __name__)
+api = flask_restful.Api(blueprint)
 
 
-def test_get_not_found(create_node, client):
-    response = client.get('/node/test-invalid')
-    assert 404 == response.status_code
-    assert '"Not Found"\n' == response.data
+class Tag(flask_restful.Resource):
+    def get(self, tag_id):
+        """
+        ::
+
+          /tag/:tag_id GET
+
+        Response code: 200
+        Response data:
+
+        .. code-block:: javascript
+
+          {
+            "tag": [
+              {
+                "node": {
+                  "name": str,
+                  "tag": str,
+                  "port": int,
+                  created_at: datetime,
+                  updated_at: datetime,
+                  deleted_at: datetime
+                }
+              }
+            ]
+          }
+        """
+        tags = tag.find_all_by_tag(tag_id)
+
+        return flask.jsonify(tag=[t.serialize for t in tags])
 
 
-def test_delete(create_node, client):
-    response = client.delete('/node/test-node')
-    assert 204 == response.status_code
-    assert '' == response.data
-
-
-def test_delete_when_deleted(create_node, client):
-    client.delete('/node/test-node')
-
-    response = client.delete('/node/test-node')
-    assert 404 == response.status_code
-    assert '"Not Found"\n' == response.data
+api.add_resource(Tag, '/tag/<tag_id>')

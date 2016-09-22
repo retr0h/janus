@@ -35,4 +35,4 @@ def delete_all_nodes(request):
 
 @pytest.fixture()
 def create_node(request, delete_all_nodes):
-    node.create('test-node')
+    node.create('test-node', 'test-tag')

@@ -1,26 +1,44 @@
 API
 ===
 
+Nodes
+-----
+
+All
+^^^
+
+.. automethod:: janus.app.nodes.Nodes.get
+
+Create
+^^^^^^
+
+.. automethod:: janus.app.nodes.Nodes.post
+
 Node
+----
+
+Delete
+^^^^^^
+
+.. automethod:: janus.app.node.Node.delete
+
+Show
+^^^^
+
+.. automethod:: janus.app.node.Node.get
+
+Tags
 ----
 
 All
 ^^^
 
-.. automethod:: janus.app.Nodes.get
+.. automethod:: janus.app.tags.Tags.get
 
-
-Create
-^^^^^^
-
-.. automethod:: janus.app.Nodes.post
-
-Delete
-^^^^^^
-
-.. automethod:: janus.app.Node.delete
+Tag
+---
 
 Show
 ^^^^
 
-.. automethod:: janus.app.Node.get
+.. automethod:: janus.app.tag.Tag.get

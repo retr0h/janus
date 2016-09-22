@@ -20,34 +20,35 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-
-def test_get(create_node, client):
-    response = client.get('/node/test-node')
-    assert 200 == response.status_code
-
-    nd = response.json.get('node')
-    assert 'test-node' == nd.get('name')
-    assert 'test-tag' == nd.get('tag')
-    assert nd.get('port')
-    assert nd.get('updated_at')
-    assert nd.get('created_at')
+from janus import node
+from janus import tag
 
 
-def test_get_not_found(create_node, client):
-    response = client.get('/node/test-invalid')
-    assert 404 == response.status_code
-    assert '"Not Found"\n' == response.data
+def test_all(create_node):
+    result = tag.all_()
+    assert 1 == len(result)
+    assert isinstance(result, list)
+    assert 'test-tag' == result[0]
 
 
-def test_delete(create_node, client):
-    response = client.delete('/node/test-node')
-    assert 204 == response.status_code
-    assert '' == response.data
+def test_all_distinct(delete_all_nodes):
+    node.create('test-node1', 'test-tag1')
+    node.create('test-node2', 'test-tag1')
+    node.create('test-node3', 'test-tag2')
+    node.create('test-node4', 'test-tag3')
+
+    result = tag.all_()
+    assert 3 == len(result)
 
 
-def test_delete_when_deleted(create_node, client):
-    client.delete('/node/test-node')
+def test_find_all_by_tag(delete_all_nodes):
+    node.create('test-node1', 'test-tag1')
+    node.create('test-node2', 'test-tag1')
+    node.create('test-node3', 'test-tag2')
+    node.create('test-node4', 'test-tag3')
 
-    response = client.delete('/node/test-node')
-    assert 404 == response.status_code
-    assert '"Not Found"\n' == response.data
+    result = tag.find_all_by_tag('test-tag1')
+    assert 2 == len(result)
+    assert isinstance(result, list)
+    assert 'test-node1' in result[0].name
+    assert 'test-node2' == result[1].name

@@ -22,32 +22,10 @@
 
 
 def test_get(create_node, client):
-    response = client.get('/node/test-node')
+    response = client.get('/tag/test-tag')
     assert 200 == response.status_code
 
-    nd = response.json.get('node')
-    assert 'test-node' == nd.get('name')
-    assert 'test-tag' == nd.get('tag')
-    assert nd.get('port')
-    assert nd.get('updated_at')
-    assert nd.get('created_at')
-
-
-def test_get_not_found(create_node, client):
-    response = client.get('/node/test-invalid')
-    assert 404 == response.status_code
-    assert '"Not Found"\n' == response.data
-
-
-def test_delete(create_node, client):
-    response = client.delete('/node/test-node')
-    assert 204 == response.status_code
-    assert '' == response.data
-
-
-def test_delete_when_deleted(create_node, client):
-    client.delete('/node/test-node')
-
-    response = client.delete('/node/test-node')
-    assert 404 == response.status_code
-    assert '"Not Found"\n' == response.data
+    td = response.json.get('tag')[0]
+    assert 40000 == td.get('port')
+    assert 'test-node' == td.get('name')
+    assert 'test-tag' == td.get('tag')
