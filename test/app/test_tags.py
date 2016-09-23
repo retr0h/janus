@@ -20,10 +20,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+import pytest
 
-def test_get(client, create_node):
+
+@pytest.mark.parametrize('create_nodes', [10], indirect=['create_nodes'])
+def test_get(create_nodes, client):
     response = client.get('/tags')
     assert 200 == response.status_code
-    assert 1 == len(response.json)
+    assert 10 == len(response.json.get('tags'))
 
-    assert {'tags': ['test-tag']} == response.json
+    assert 'test-tag0' == response.json.get('tags')[0]

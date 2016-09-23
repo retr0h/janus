@@ -34,5 +34,24 @@ def delete_all_nodes(request):
 
 
 @pytest.fixture()
-def create_node(request, delete_all_nodes):
-    node.create('test-node', 'test-tag')
+def create_nodes(request, delete_all_nodes):
+    if getattr(request, 'param', None):
+        counter = request.param
+    else:
+        return create_node()
+
+    for n in range(counter):
+        name = 'test-node{}'.format(n)
+        tag = 'test-tag{}'.format(n)
+        port = 40000 + n
+        create_node(name, tag, port)
+
+
+@pytest.helpers.register
+def create_node(name='test-node', tag='test-tag', port=None):
+    return node.create(name, tag, port)
+
+
+@pytest.helpers.register
+def delete_node(name):
+    return node.delete_by_name(name)

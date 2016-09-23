@@ -20,13 +20,30 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+import pytest
 
-def test_get(client, create_node):
+
+@pytest.mark.parametrize('create_nodes', [10], indirect=['create_nodes'])
+def test_get(create_nodes, client):
     response = client.get('/nodes')
     assert 200 == response.status_code
-    assert 1 == len(response.json)
+    assert 10 == len(response.json.get('nodes'))
+    assert 'test-node0' == response.json.get('nodes')[0]
 
-    assert {'nodes': ['test-node']} == response.json
+
+@pytest.mark.parametrize('create_nodes', [10], indirect=['create_nodes'])
+def test_get_with_pagination(create_nodes, client):
+    response = client.get('/nodes?limit=5')
+    d = response.json.get('nodes')
+    assert 200 == response.status_code
+    assert 5 == len(d)
+    assert 'test-node0' == d[0]
+
+    response = client.get('/nodes?limit=5&page=1')
+    d = response.json.get('nodes')
+    assert 200 == response.status_code
+    assert 5 == len(d)
+    assert 'test-node5' == d[0]
 
 
 def test_post(client, delete_all_nodes):
@@ -34,8 +51,8 @@ def test_post(client, delete_all_nodes):
     response = client.post('/nodes', data=data)
     assert 201 == response.status_code
 
-    nd = response.json.get('node')
-    assert 'test-nodename' == nd.get('name')
+    d = response.json.get('node')
+    assert 'test-nodename' == d.get('name')
 
 
 def test_post_when_exists(client, delete_all_nodes):

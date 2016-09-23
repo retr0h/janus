@@ -21,31 +21,31 @@
 # THE SOFTWARE.
 
 
-def test_get(create_node, client):
+def test_get(create_nodes, client):
     response = client.get('/node/test-node')
     assert 200 == response.status_code
 
-    nd = response.json.get('node')
-    assert 'test-node' == nd.get('name')
-    assert 'test-tag' == nd.get('tag')
-    assert nd.get('port')
-    assert nd.get('updated_at')
-    assert nd.get('created_at')
+    d = response.json.get('node')
+    assert 'test-node' == d.get('name')
+    assert 'test-tag' == d.get('tag')
+    assert d.get('port')
+    assert d.get('updated_at')
+    assert d.get('created_at')
 
 
-def test_get_not_found(create_node, client):
+def test_get_not_found(create_nodes, client):
     response = client.get('/node/test-invalid')
     assert 404 == response.status_code
     assert '"Not Found"\n' == response.data
 
 
-def test_delete(create_node, client):
+def test_delete(create_nodes, client):
     response = client.delete('/node/test-node')
     assert 204 == response.status_code
     assert '' == response.data
 
 
-def test_delete_when_deleted(create_node, client):
+def test_delete_when_deleted(create_nodes, client):
     client.delete('/node/test-node')
 
     response = client.delete('/node/test-node')

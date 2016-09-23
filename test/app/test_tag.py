@@ -21,11 +21,11 @@
 # THE SOFTWARE.
 
 
-def test_get(create_node, client):
+def test_get(create_nodes, client):
     response = client.get('/tag/test-tag')
     assert 200 == response.status_code
 
-    td = response.json.get('tag')[0]
-    assert 40000 == td.get('port')
-    assert 'test-node' == td.get('name')
-    assert 'test-tag' == td.get('tag')
+    d = response.json.get('tag')[0]
+    assert 40000 == d.get('port')
+    assert 'test-node' == d.get('name')
+    assert 'test-tag' == d.get('tag')

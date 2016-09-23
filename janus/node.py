@@ -61,15 +61,24 @@ def get_next_port():
         return session.query(n).count() + conf.port_start()
 
 
-def all_():
+def all_(limit=0, page=None):
     """
     Finds and returns a list of all non-deleted nodes.
 
+    :param limit: An int containing the number of nodes to retrieve.
+    :param page: An int containing the number to calculate an offset.
     :return: list
     """
     with client.session_scope() as session:
         n = models.Node
-        return (session.query(n).filter(n.deleted_at.is_(None)).all())
+        q = session.query(n)
+        q = q.filter(n.deleted_at.is_(None))
+        if limit:
+            q = q.limit(limit)
+        if page:
+            q = q.offset(int(limit) * int(page))
+
+        return q.all()
 
 
 def create(name, tag, port=None):

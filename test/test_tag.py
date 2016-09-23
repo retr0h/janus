@@ -20,35 +20,31 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from janus import node
+import pytest
+
 from janus import tag
 
 
-def test_all(create_node):
+@pytest.mark.parametrize('create_nodes', [5], indirect=['create_nodes'])
+def test_all(create_nodes):
     result = tag.all_()
-    assert 1 == len(result)
+    assert 5 == len(result)
     assert isinstance(result, list)
-    assert 'test-tag' == result[0]
+    assert 'test-tag0' == result[0]
 
 
-def test_all_distinct(delete_all_nodes):
-    node.create('test-node1', 'test-tag1')
-    node.create('test-node2', 'test-tag1')
-    node.create('test-node3', 'test-tag2')
-    node.create('test-node4', 'test-tag3')
-
+@pytest.mark.parametrize('create_nodes', [5], indirect=['create_nodes'])
+def test_all_distinct(create_nodes):
     result = tag.all_()
-    assert 3 == len(result)
+    assert 5 == len(result)
 
 
-def test_find_all_by_tag(delete_all_nodes):
-    node.create('test-node1', 'test-tag1')
-    node.create('test-node2', 'test-tag1')
-    node.create('test-node3', 'test-tag2')
-    node.create('test-node4', 'test-tag3')
+@pytest.mark.parametrize('create_nodes', [5], indirect=['create_nodes'])
+def test_find_all_by_tag(create_nodes):
+    pytest.helpers.create_node('test-node5', 'test-tag0')
 
-    result = tag.find_all_by_tag('test-tag1')
+    result = tag.find_all_by_tag('test-tag0')
     assert 2 == len(result)
     assert isinstance(result, list)
-    assert 'test-node1' in result[0].name
-    assert 'test-node2' == result[1].name
+    assert 'test-node0' in result[0].name
+    assert 'test-node5' == result[1].name

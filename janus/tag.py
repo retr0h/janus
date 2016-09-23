@@ -25,7 +25,6 @@ Broke this out into a module, since we will likely move to n to 1 relationship.
 
 from janus import client
 from janus import models
-from janus import node
 
 
 def all_():
@@ -53,5 +52,5 @@ def find_all_by_tag(tag):
         q = q.filter(n.tag == tag)
         q = q.filter(n.deleted_at.is_(None))
         q = q.order_by(n.tag)
-        
+
         return q.all()

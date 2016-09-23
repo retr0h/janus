@@ -37,6 +37,8 @@ class Nodes(flask_restful.Resource):
         ::
 
           /nodes GET
+          /nodes?limit=:int
+          /nodes?limit=:int&page=:int
 
         Response code: 200
         Response data:
@@ -51,7 +53,11 @@ class Nodes(flask_restful.Resource):
             ]
           }
         """
-        return flask.jsonify(nodes=[result.name for result in node.all_()])
+        args = flask.request.args
+        limit = args.get('limit', 10)
+        page = args.get('page')
+
+        return flask.jsonify(nodes=[n.name for n in node.all_(limit, page)])
 
     def post(self):
         """
