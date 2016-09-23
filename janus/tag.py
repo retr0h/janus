@@ -49,5 +49,9 @@ def find_all_by_tag(tag):
     """
     with client.temp_scope() as session:
         n = models.Node
-        return (session.query(n).filter(n.tag == tag)
-                .filter(n.deleted_at.is_(None)).order_by(n.tag).all())
+        q = session.query(n)
+        q = q.filter(n.tag == tag)
+        q = q.filter(n.deleted_at.is_(None))
+        q = q.order_by(n.tag)
+        
+        return q.all()

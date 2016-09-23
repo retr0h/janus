@@ -150,7 +150,8 @@ def find_by_name(name, soft=False):
     """
     with client.temp_scope() as session:
         n = models.Node
-        q = session.query(n).filter(n.name == name)
+        q = session.query(n)
+        q = q.filter(n.name == name)
         if not soft:
             q = q.filter(n.deleted_at.is_(None))
 
@@ -165,5 +166,8 @@ def find_deleted():
     """
     with client.temp_scope() as session:
         n = models.Node
-        return (session.query(n).filter(n.deleted_at.isnot(None))
-                .order_by(n.port).all())
+        q = session.query(n)
+        q = q.filter(n.deleted_at.isnot(None))
+        q = q.order_by(n.port)
+
+        return q.all()
