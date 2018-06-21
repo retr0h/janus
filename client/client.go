@@ -30,9 +30,18 @@ import (
 
 // EtcdClient for accessing Etcd.
 type EtcdClient struct {
-	client         *clientv3.Client
+	client         clientv3.Client
 	requestTimeout time.Duration
 }
+
+// EtcdItem contains information about the key fetched.
+type EtcdItem struct {
+	Key   string // Key stored in etcd.
+	Value string // Value assigned to `Key`.
+}
+
+// EtcdCollection contains a collection of `EtcdItems`.
+type EtcdCollection []EtcdItem
 
 // NewEtcdClient constructs a new `EtcdClient`.
 func NewEtcdClient(etcdURI []string) (*EtcdClient, error) {
@@ -41,48 +50,57 @@ func NewEtcdClient(etcdURI []string) (*EtcdClient, error) {
 		DialTimeout: 5 * time.Second,
 	}
 
-	etcd, err := clientv3.New(cfg)
+	etcdClient, err := clientv3.New(cfg)
 	if err != nil {
 		return nil, err
 	}
+
 	return &EtcdClient{
-		client:         etcd,
+		client:         *etcdClient,
 		requestTimeout: 5 * time.Second,
 	}, nil
 }
 
-// Delete a key in Etcd.
-func (etcdClient *EtcdClient) Delete(key string, opts ...clientv3.OpOption) (*clientv3.DeleteResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), etcdClient.requestTimeout)
+// Delete deletes a key in Etcd.
+func (e *EtcdClient) Delete(key string, opts ...clientv3.OpOption) (*clientv3.DeleteResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), e.requestTimeout)
 	defer cancel()
-	return etcdClient.client.Delete(ctx, key, opts...)
+
+	return e.client.Delete(ctx, key, opts...)
 }
 
-// Get gets a value in Etcd.  Returns an empty string if key is not found.
-func (etcdClient *EtcdClient) Get(key string, opts ...clientv3.OpOption) (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), etcdClient.requestTimeout)
+// Get gets key(s) in Etcd.  Returns an empty slice if key is not found.
+// When passed WithRange(), Get will return the key(s) matching the provide key prefix.
+func (e *EtcdClient) Get(key string, opts ...clientv3.OpOption) (EtcdCollection, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), e.requestTimeout)
 	defer cancel()
-	response, err := etcdClient.client.Get(ctx, key, opts...)
+	response, err := e.client.Get(ctx, key, opts...)
 
 	if err != nil {
-		return "", err
+		return EtcdCollection{EtcdItem{}}, err
 	}
 
-	if response != nil && len(response.Kvs) == 0 {
-		return "", err
+	etcdCollection := EtcdCollection{}
+	for _, item := range response.Kvs {
+		etcdItem := EtcdItem{
+			Key:   string(item.Key),
+			Value: string(item.Value),
+		}
+		etcdCollection = append(etcdCollection, etcdItem)
 	}
 
-	return string(response.Kvs[0].Value), nil
+	return etcdCollection, nil
+}
 
+// GetWithPrefix gets key(s) from Etcd matching the provided key prefix.
+func (e *EtcdClient) GetWithPrefix(keyPrefix string) (EtcdCollection, error) {
+	return e.Get(keyPrefix, clientv3.WithPrefix())
 }
 
 // Put sets a value in Etcd.
-func (etcdClient *EtcdClient) Put(key, value string, opts ...clientv3.OpOption) (*clientv3.PutResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), etcdClient.requestTimeout)
+func (e *EtcdClient) Put(key, value string, opts ...clientv3.OpOption) (*clientv3.PutResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), e.requestTimeout)
 	defer cancel()
-	return etcdClient.client.Put(ctx, key, value, opts...)
-}
 
-// func main() error {
-//     return nil
-// }
+	return e.client.Put(ctx, key, value, opts...)
+}
