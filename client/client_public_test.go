@@ -49,17 +49,15 @@ func (suite *EtcdClientTestSuite) TearDownTest() {
 func (suite *EtcdClientTestSuite) TestDelete() {
 	suite.etcd.Put("foo", "bar")
 
-	suite.etcd.Delete("foo")
-
-	keys, err := suite.etcd.Get("foo")
-
-	assert.Equal(suite.T(), 0, len(keys))
+	_, err := suite.etcd.Delete("foo")
 	assert.NoError(suite.T(), err)
+
+	keys, _ := suite.etcd.Get("foo")
+	assert.Equal(suite.T(), 0, len(keys))
 }
 
 func (suite *EtcdClientTestSuite) TestDeleteDoesNotErrorOnMissingKey() {
 	_, err := suite.etcd.Delete("invalid")
-
 	assert.NoError(suite.T(), err)
 }
 
@@ -67,7 +65,6 @@ func (suite *EtcdClientTestSuite) TestGet() {
 	suite.etcd.Put("foo", "bar")
 
 	keys, err := suite.etcd.Get("foo")
-
 	assert.Equal(suite.T(), "foo", keys[0].Key)
 	assert.Equal(suite.T(), "bar", keys[0].Value)
 	assert.NoError(suite.T(), err)
@@ -77,7 +74,6 @@ func (suite *EtcdClientTestSuite) TestGet() {
 
 func (suite *EtcdClientTestSuite) TestGetReturnsEmptyListOnMissingKey() {
 	keys, err := suite.etcd.Get("invalid")
-
 	assert.Equal(suite.T(), 0, len(keys))
 	assert.NoError(suite.T(), err)
 }
@@ -88,7 +84,6 @@ func (suite *EtcdClientTestSuite) TestGetWithPrefix() {
 	suite.etcd.Put("/foo/baz", "3")
 
 	keys, err := suite.etcd.GetWithPrefix("/foo/")
-
 	assert.Equal(suite.T(), 3, len(keys))
 	assert.NoError(suite.T(), err)
 
@@ -98,12 +93,11 @@ func (suite *EtcdClientTestSuite) TestGetWithPrefix() {
 }
 
 func (suite *EtcdClientTestSuite) TestPut() {
-	suite.etcd.Put("foo", "bar")
-
-	keys, err := suite.etcd.Get("foo")
-
-	assert.Equal(suite.T(), "bar", keys[0].Value)
+	_, err := suite.etcd.Put("foo", "bar")
 	assert.NoError(suite.T(), err)
+
+	keys, _ := suite.etcd.Get("foo")
+	assert.Equal(suite.T(), "bar", keys[0].Value)
 
 	suite.etcd.Delete("foo")
 }

@@ -22,10 +22,10 @@
 package pools
 
 import (
-	"bytes"
-	"html/template"
+	"fmt"
 
 	"github.com/retr0h/janus/client"
+	"github.com/retr0h/janus/labels"
 )
 
 // Pools interface defines the methods for implementing Pool related business
@@ -34,36 +34,59 @@ import (
 //     GetPools(string) ([]client.EtcdItem, error)
 // }
 
-const poolsCidrPrefix = "pools/{{.namespace}}/{{.cidr}}"
-const poolsLabelPrefix = "pools/{{.namespace}}/labels/pools"
-
 // Pools is an object which implements the `Pools` business logic interface.
 type Pools struct {
 	etcdClient client.EtcdClient
+	labels     labels.Labels
 }
 
 // NewPools constructs a new `Pools`.
-func NewPools(e *client.EtcdClient) (*Pools, error) {
+func NewPools(e *client.EtcdClient, l *labels.Labels) (*Pools, error) {
 	return &Pools{
 		etcdClient: *e,
+		labels:     *l,
 	}, nil
 }
 
-// CreatePool creates a Pool.
 // UpdatePool updates a Pool.
 // DeletePool removes a Pool.
 
-// GetPool returns the requested Pool.
-func (p *Pools) GetPool(namespace string, id string) (client.EtcdItem, error) {
-	m := map[string]interface{}{
-		"namespace": namespace,
-		"cidr":      id,
+// CreatePool creates a Pool.
+func (p *Pools) CreatePool(namespace string, cidr string) error {
+	// TODO(retr0h): Needs to be in a transaction.
+	key := poolsCidrKey(namespace, cidr)
+	if _, err := p.etcdClient.Put(key, "foo"); err != nil {
+		return err
 	}
 
-	keyPrefix := &bytes.Buffer{}
-	template.Must(template.New("").Parse(poolsCidrPrefix)).Execute(keyPrefix, m)
+	// TODO(retr0h): Needs to be in a transaction.
+	if err := p.labels.CreateLabel(namespace, "pools", cidr); err != nil {
+		return err
+	}
 
-	key, err := p.etcdClient.Get(keyPrefix.String())
+	return nil
+}
+
+// DeletePool deletes a Pool.
+func (p *Pools) DeletePool(namespace string, cidr string) error {
+	// TODO(retr0h): Needs to be in a transaction.
+	key := poolsCidrKey(namespace, cidr)
+	if _, err := p.etcdClient.Delete(key); err != nil {
+		return err
+	}
+
+	// TODO(retr0h): Needs to be in a transaction.
+	if err := p.labels.DeleteLabel(namespace, "pools", cidr); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// GetPool returns the requested Pool.
+func (p *Pools) GetPool(namespace string, cidr string) (client.EtcdItem, error) {
+	keyPrefix := poolsCidrKey(namespace, cidr)
+	key, err := p.etcdClient.Get(keyPrefix)
 	if err != nil {
 		return client.EtcdItem{}, err
 	}
@@ -77,17 +100,14 @@ func (p *Pools) GetPool(namespace string, id string) (client.EtcdItem, error) {
 
 // GetPools returns a list of Pools.
 func (p *Pools) GetPools(namespace string) (client.EtcdCollection, error) {
-	m := map[string]interface{}{
-		"namespace": namespace,
-	}
-
-	keyPrefix := &bytes.Buffer{}
-	template.Must(template.New("").Parse(poolsLabelPrefix)).Execute(keyPrefix, m)
-
-	keys, err := p.etcdClient.GetWithPrefix(keyPrefix.String())
+	keys, err := p.labels.GetLabels(namespace, "pools")
 	if err != nil {
 		return client.EtcdCollection{client.EtcdItem{}}, err
 	}
 
 	return keys, nil
+}
+
+func poolsCidrKey(namespace string, cidr string) string {
+	return fmt.Sprintf("pools/%s/%s", namespace, cidr)
 }
