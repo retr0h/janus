@@ -11,4 +11,7 @@
   name = "github.com/fatih/color"
 
 [[constraint]]
+  name = "github.com/gin-gonic/gin"
+
+[[constraint]]
   name = "github.com/stretchr/testify"
