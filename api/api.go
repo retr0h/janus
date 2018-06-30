@@ -21,20 +21,19 @@
 package api
 
 import (
+	"net/http"
 	"net/url"
 
 	"github.com/gin-gonic/gin"
 	"github.com/retr0h/janus/client"
 	"github.com/retr0h/janus/labels"
 	"github.com/retr0h/janus/pools"
+	"github.com/spf13/viper"
 )
 
 func newPool() *pools.Pools {
-	etcdClient, _ := client.NewEtcdClient([]string{
-		"http://etcd-0:2379",
-		"http://etcd-1:2379",
-		"http://etcd-2:2379",
-	})
+	etcdServers := viper.GetStringSlice("backend.etcd.servers")
+	etcdClient, _ := client.NewEtcdClient(etcdServers)
 	labels, _ := labels.NewLabels(etcdClient)
 	pools, _ := pools.NewPools(etcdClient, labels)
 
@@ -44,8 +43,8 @@ func newPool() *pools.Pools {
 // GetMainEngine return .....
 func GetMainEngine() *gin.Engine {
 	r := gin.Default()
-	r.UseRawPath = true
-	r.UnescapePathValues = false
+	r.UseRawPath = viper.GetBool("server.use_raw_path")
+	r.UnescapePathValues = viper.GetBool("server.unescape_path_values")
 	pools := newPool()
 
 	v1 := r.Group("/v1")
@@ -54,16 +53,21 @@ func GetMainEngine() *gin.Engine {
 			id := c.Param("id")
 			decodedID, err := url.PathUnescape(id)
 			if err != nil {
-				//
+				// c.AbortWithError(http.StatusUnauthorized, errors.StatusInternalServerError).SetType(gin.ErrorTypePublic)
 			}
 
 			key, err := pools.GetPool("namespace", decodedID)
 
 			if err != nil {
-				//
+				// c.AbortWithError(http.StatusUnauthorized, errors.StatusInternalServerError).SetType(gin.ErrorTypePublic)
 			}
 
-			c.JSON(200, gin.H{
+			if key.Value == "" {
+				c.String(http.StatusNotFound, "resource not found")
+				return
+			}
+
+			c.JSON(http.StatusOK, gin.H{
 				"namespace": "namespace",
 				"id":        key.Value,
 			})
@@ -73,8 +77,4 @@ func GetMainEngine() *gin.Engine {
 	}
 
 	return r
-}
-
-func main() {
-	GetMainEngine().Run(":8080")
 }

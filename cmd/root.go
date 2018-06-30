@@ -23,20 +23,22 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var (
+	cfgFile   string
 	version   string
 	buildHash string
 	buildDate string
 	debug     bool
-	filename  string
 )
 
-// RootCmd represents the base command when called without any subcommands
-var RootCmd = &cobra.Command{
+// rootCmd represents the base command when called without any subcommands
+var rootCmd = &cobra.Command{
 	Use:   "janus",
 	Short: "A restful port reservation microservice.",
 	Long: `
@@ -57,11 +59,34 @@ func Execute(v string, bh string, bd string) {
 	buildHash = bh
 	buildDate = bd
 
-	if err := RootCmd.Execute(); err != nil {
+	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 }
 
 func init() {
+	cobra.OnInitialize(initConfig)
+
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is ~/.janus.yml)")
+}
+
+// initConfig reads in config file and ENV variables if set.
+func initConfig() {
+	if cfgFile != "" {
+		// Use config file from the flag.
+		viper.SetConfigFile(cfgFile)
+	}
+
+	viper.SetConfigName(".janus")                          // Name of config file (without extension).
+	viper.AddConfigPath("$HOME")                           // Adding home directory as first search path.
+	viper.AddConfigPath(".")                               // Look in currect directory for config.
+	viper.AutomaticEnv()                                   // Read in environment variables that match.
+	viper.SetEnvPrefix("janus")                            // The prefix ENVIRONMENT variables will use.
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_")) // Access env vars as FOO_BAR.
+
+	// If a config file is found, read it in.
+	if err := viper.ReadInConfig(); err == nil {
+		fmt.Println("Using config file:", viper.ConfigFileUsed())
+	}
 }

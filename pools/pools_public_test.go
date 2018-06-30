@@ -26,6 +26,8 @@ import (
 	"github.com/retr0h/janus/client"
 	"github.com/retr0h/janus/labels"
 	"github.com/retr0h/janus/pools"
+	testutils "github.com/retr0h/janus/test/utils"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
@@ -37,12 +39,13 @@ type PoolsTestSuite struct {
 	etcdClient client.EtcdClient
 }
 
+func init() {
+	testutils.ViperInit()
+}
+
 func (suite *PoolsTestSuite) SetupTest() {
-	etcdClient, _ := client.NewEtcdClient([]string{
-		"http://etcd-0:2379",
-		"http://etcd-1:2379",
-		"http://etcd-2:2379",
-	})
+	etcdServers := viper.GetStringSlice("backend.etcd.servers")
+	etcdClient, _ := client.NewEtcdClient(etcdServers)
 	labels, _ := labels.NewLabels(etcdClient)
 	pools, _ := pools.NewPools(etcdClient, labels)
 

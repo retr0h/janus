@@ -1,0 +1,11 @@
+server:
+  port: :8080  # SERVER_PORT
+  use_raw_path: true  # SERVER_USE_RAW_PATH
+  unescape_path_values: false  # SERVER_UNESCAPE_PATH_VALUES
+
+backend:
+  etcd:
+    servers:
+      - http://etcd-0:2379  # BACKEND_ETCD_SERVERS
+      - http://etcd-1:2379
+      - http://etcd-2:2379
